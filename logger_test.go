@@ -28,6 +28,7 @@ func TestLogger(t *testing.T) {
 	tt.ShouldPanic(func() { l.Critical("noooooooooooo") })
 	tt.ShouldPanic(func() { l.Criticalf("%s %d %t", "ahhhhhhh", 2, true) })
 	l.Abort(42, "aborting")
+	l.Logf("simple log without prefix")
 }
 
 func bufferLogger() (buf *bytes.Buffer, l *Logger) {
@@ -56,6 +57,9 @@ func TestDebug(t *testing.T) {
 	b.Reset()
 	l.Abort(42, "dummy message")
 	tt.Assert(strings.Contains(b.String(), " ABORT "))
+	b.Reset()
+	l.Logf("dummy message")
+	tt.Assert(!strings.Contains(b.String(), " - "))
 }
 
 func TestInfo(t *testing.T) {
@@ -77,6 +81,9 @@ func TestInfo(t *testing.T) {
 	b.Reset()
 	l.Abort(42, "dummy message")
 	tt.Assert(strings.Contains(b.String(), " ABORT "))
+	b.Reset()
+	l.Logf("dummy message")
+	tt.Assert(!strings.Contains(b.String(), " - "))
 }
 
 func TestWarning(t *testing.T) {
@@ -98,6 +105,9 @@ func TestWarning(t *testing.T) {
 	b.Reset()
 	l.Abort(42, "dummy message")
 	tt.Assert(strings.Contains(b.String(), " ABORT "))
+	b.Reset()
+	l.Logf("dummy message")
+	tt.Assert(!strings.Contains(b.String(), " - "))
 }
 
 func TestCritical(t *testing.T) {
@@ -119,6 +129,9 @@ func TestCritical(t *testing.T) {
 	b.Reset()
 	l.Abort(42, "dummy message")
 	tt.Assert(strings.Contains(b.String(), " ABORT "))
+	b.Reset()
+	l.Logf("dummy message")
+	tt.Assert(!strings.Contains(b.String(), " - "))
 }
 
 func readlines(path string) (lines []string) {

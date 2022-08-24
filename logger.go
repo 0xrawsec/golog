@@ -91,7 +91,7 @@ func (l *Logger) writeString(s string) (err error) {
 }
 
 func (l *Logger) output(prefix string, i ...interface{}) string {
-	return fmt.Sprintf(l.format(prefix, i...), i...)
+	return fmt.Sprintf(l.makeFormat(prefix, i...), i...)
 }
 
 func (l *Logger) log(msg string) (err error) {
@@ -104,13 +104,17 @@ func (l *Logger) timestamp() []byte {
 	return append(append([]byte("["), []byte(time.Now().Format(l.Layout))...), ']')
 }
 
-func (l *Logger) format(prefix string, i ...interface{}) string {
-	fmt := make([][]byte, len(i)+2)
-	fmt[0] = l.timestamp()
-	fmt[1] = []byte(prefix)
-	for i := 2; i < len(fmt); i++ {
-		fmt[i] = []byte("%v")
+func (l *Logger) makeFormat(prefix string, i ...interface{}) string {
+	fmt := make([][]byte, 0, len(i)+2)
+	fmt = append(fmt, l.timestamp())
+	if prefix != "" {
+		fmt = append(fmt, []byte(prefix))
 	}
+
+	for range i {
+		fmt = append(fmt, []byte("%v"))
+	}
+
 	return string(append(bytes.Join(fmt, []byte(" ")), '\n'))
 }
 
@@ -118,6 +122,15 @@ func (l *Logger) handleError(err error) {
 	if l.ErrorHandler != nil {
 		l.ErrorHandler(err)
 	}
+}
+
+func (l *Logger) Log(i ...interface{}) {
+	msg := l.output("", i...)
+	l.log(msg)
+}
+
+func (l *Logger) Logf(format string, i ...interface{}) {
+	l.Log(fmt.Sprintf(format, i...))
 }
 
 func (l *Logger) Debug(i ...interface{}) {
