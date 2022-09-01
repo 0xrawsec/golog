@@ -26,14 +26,51 @@ const (
 var (
 	DefaultLayout = time.RFC3339Nano
 	DefaultLevel  = LevelInfo
+	Stdout        = FromStdout()
+
+	ErrExistingLogger = errors.New("logger is already existing")
+
+	loggers = Loggers{m: make(map[string]*Logger)}
 )
+
+type Loggers struct {
+	sync.Mutex
+	m map[string]*Logger
+}
+
+func (l *Loggers) get(name string) (log *Logger, ok bool) {
+	l.Lock()
+	defer l.Unlock()
+	log, ok = l.m[name]
+	return
+}
+
+func (l *Loggers) set(log *Logger) error {
+	l.Lock()
+	defer l.Unlock()
+	if _, ok := l.m[log.Name]; ok {
+		return fmt.Errorf("%s %w", log.Name, ErrExistingLogger)
+	}
+	l.m[log.Name] = log
+	return nil
+}
+
+func ShareLogger(l *Logger) error {
+	return loggers.set(l)
+}
+
+func GetSharedLogger(name string) (*Logger, bool) {
+	return loggers.get(name)
+}
 
 type Logger struct {
 	sync.Mutex
-	w     io.Writer
-	mock  bool
-	close func() error
+	w      io.Writer
+	mock   bool
+	closed bool
+	close  func() error
 
+	Name         string
 	Level        int
 	Layout       string
 	ErrorHandler func(error)
@@ -97,6 +134,9 @@ func (l *Logger) output(prefix string, i ...interface{}) string {
 func (l *Logger) log(msg string) (err error) {
 	l.Lock()
 	defer l.Unlock()
+	if l.closed {
+		return
+	}
 	return l.writeString(msg)
 }
 
@@ -198,6 +238,7 @@ func (l *Logger) Abort(rc int, i ...interface{}) {
 }
 
 func (l *Logger) Close() error {
+	l.closed = true
 	if l.close != nil {
 		l.Lock()
 		defer l.Unlock()

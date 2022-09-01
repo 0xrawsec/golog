@@ -174,3 +174,18 @@ func TestOpenPath(t *testing.T) {
 	tt.Assert(strings.Contains(lines[1], " WARNING "))
 	tt.Assert(strings.Contains(lines[2], " ERROR "))
 }
+
+func TestSharedLoggers(t *testing.T) {
+	tt := toast.FromT(t)
+	name := "testing"
+
+	_, ok := GetSharedLogger(name)
+	tt.Assert(ok == false)
+	l := FromStdout()
+	l.Name = name
+	tt.CheckErr(ShareLogger(l))
+	tt.ExpectErr(ShareLogger(l), ErrExistingLogger)
+	l, ok = GetSharedLogger(name)
+	tt.Assert(ok)
+	l.Info("hello test")
+}
