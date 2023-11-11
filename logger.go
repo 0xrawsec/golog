@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ const (
 	LevelError
 	// LevelCritical log level
 	LevelCritical
+	LevelDisable = math.MaxInt
 )
 
 var (
@@ -82,7 +84,7 @@ func OpenLogFile(path string, mode os.FileMode) (fd *os.File, err error) {
 		return
 	}
 
-	if _, err = fd.Seek(0, os.SEEK_END); err != nil {
+	if _, err = fd.Seek(0, io.SeekEnd); err != nil {
 		return
 	}
 
@@ -105,6 +107,10 @@ func FromWriteCloser(w io.WriteCloser) *Logger {
 
 func FromStdout() *Logger {
 	return FromWriter(os.Stdout)
+}
+
+func FromStderr() *Logger {
+	return FromWriter(os.Stderr)
 }
 
 func FromFile(fd *os.File) (l *Logger) {
